@@ -1,2 +1,2 @@
-# BlazorPlayground
-A playground for experimenting with Blazor
+# SharpExplorer
+An experimental webapp for exploring .NET in a browser
