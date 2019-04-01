@@ -7,10 +7,23 @@
     <base href="/" />
     <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet" />
     <link href="css/site.css" rel="stylesheet" />
+    <script src="js/jquery-3.3.1.min.js"></script>
+    <script>
+        function deferredChange(el) {
+            var now = new Date();
+            if (!el.lastInputDate || now.getTime() < el.lastInputDate.getTime() + 500) {
+                if (el.lastTimeout) {
+                    clearTimeout(el.lastTimeout);
+                }
+            }
+            var f = function () { el.dispatchEvent(new Event('change')); };
+            el.lastInputDate = new Date();
+            el.lastTimeout = setTimeout(f, 500);
+        }
+    </script>
 </head>
 <body>
     <app>Loading...</app>
-
     <script src="_framework/components.webassembly.js"></script>
 </body>
 </html>

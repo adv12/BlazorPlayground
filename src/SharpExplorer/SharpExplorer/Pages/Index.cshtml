@@ -1,27 +1,28 @@
 ﻿@page "/"
 
-<ul>
-    @foreach (string typeName in _allTypes.Keys)
-    {
-    <li>@typeName</li>
-    }
-</ul>
+<FilteredListView UniqueId="allTypes" RowHeaders="@TypeRowHeaders" Rows="@TypeRows" FilterPlaceholder="Enter a type filter"/>
+<FilteredListView UniqueId="typeMethods" RowHeaders="@MethodRowHeaders" Rows="@MethodRows" FilterPlaceholder="Enter a method filter"/>
 
 @functions {
-    SortedDictionary<string, Type> _allTypes = new SortedDictionary<string, Type>();
+    Row[] TypeRows { get; set; }
+    string[] TypeRowHeaders => new string[] { "Type Name", "Namespace" };
+
+    Row[] MethodRows { get; set; } = { new Row("foo", "foo", "foo") };
+    string[] MethodRowHeaders => new string[] { "Method Name" };
 
     protected override void OnInit()
     {
         base.OnInit();
-        foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+        var types = ReflectionUtil.AllTypes;
+        Row[] rows = new Row[types.Count];
+        int i = 0;
+        foreach (string typeName in types.Keys)
         {
-            foreach (Type type in assembly.GetTypes())
-            {
-                if (type.IsPublic)
-                {
-                    _allTypes[type.FullName] = type;
-                }
-            }
+            Type type = types[typeName];
+            rows[i++] = new Row(type, typeName, type.Name, type.Namespace);
         }
+        TypeRows = rows;
     }
+
+
 }
