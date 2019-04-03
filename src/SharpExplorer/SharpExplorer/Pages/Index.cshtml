@@ -1,17 +1,58 @@
 ﻿@page "/"
 
 <FilteredListView UniqueId="allTypes" RowHeaders="@TypeRowHeaders" Rows="@TypeRows" FilterPlaceholder="Enter a type filter"/>
-<FilteredListView UniqueId="typeMethods" RowHeaders="@MethodRowHeaders" Rows="@MethodRows" FilterPlaceholder="Enter a method filter"/>
+<FilteredListView ref="_typeConstructorsListView" UniqueId="typeConstructors" RowHeaders="@ConstructorRowHeaders" Rows="@ConstructorRows" FilterPlaceholder="Enter a constructor filter"/>
 
 @functions {
-    Row[] TypeRows { get; set; }
-    string[] TypeRowHeaders => new string[] { "Type Name", "Namespace" };
+    static Index _instance;
 
-    Row[] MethodRows { get; set; } = { new Row("foo", "foo", "foo") };
-    string[] MethodRowHeaders => new string[] { "Method Name" };
+    public Row[] TypeRows { get; set; }
+    public string[] TypeRowHeaders => new string[] { "Type Name", "Namespace" };
+
+    public Row[] ConstructorRows { get; set; } = {  };
+    public string[] ConstructorRowHeaders => new string[] { "Constructor Name" };
+
+    FilteredListView _typeConstructorsListView;
+
+    public Type SelectedType { get; set; }
+
+    [JSInvokable("SelectRow")]
+    public static void SelectRow(string uniqueId, string filterString)
+    {
+        if (uniqueId == "allTypes")
+        {
+            SelectType(filterString);
+        }
+        else if (uniqueId == "typeConstructors")
+        {
+            //
+        }
+    }
+
+    public static void SelectType(string typeName)
+    {
+        Type t = ReflectionUtil.AllTypes[typeName];
+        ConstructorInfo[] constructors = t.GetConstructors();
+
+        //Row[] rows = new Row[] { new Row("foo", "bar", "baz"), new Row("one", "two", "three") };
+
+        Row[] rows = new Row[constructors.Length];
+        int i = 0;
+        foreach (ConstructorInfo constructor in constructors)
+        {
+            ParameterInfo[] parameters = constructor.GetParameters();
+            string parameterString = string.Join(",", parameters.Select(p => p.ParameterType.ToString()).ToArray());
+            string signature = $"{constructor.Name}({parameterString})";
+            rows[i++] = new Row(constructor, signature, signature);
+        }
+        _instance.ConstructorRows = rows;
+        //_instance._typeConstructorsListView.Refresh();
+        _instance.StateHasChanged();
+    }
 
     protected override void OnInit()
     {
+        _instance = this;
         base.OnInit();
         var types = ReflectionUtil.AllTypes;
         Row[] rows = new Row[types.Count];
@@ -23,6 +64,5 @@
         }
         TypeRows = rows;
     }
-
 
 }

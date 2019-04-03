@@ -66,6 +66,15 @@ app {
     background-color: #f0f0f0;
 }
 
+.filteredListViewTable tr:hover {
+    background-color: #ccccff;
+}
+
+.filteredListViewTable th, .filteredListViewTable td {
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
 .valid.modified:not([type=checkbox]) {
     outline: 1px solid #26b050;
 }

@@ -19,7 +19,7 @@
                 {
                     @if (string.IsNullOrEmpty(Filter) || row.FilterString.Contains(LowerFilter))
                     {
-                        <tr class="filteredListViewTableRow">
+                        <tr class="filteredListViewTableRow" onclick="@string.Format(OnClick, UniqueId, row.FullName)">
                             @foreach (string cell in row.Cells)
                             {
                                 <td class="filteredListViewTableData">@cell</td>
@@ -44,6 +44,7 @@
     string FilterId => UniqueId + "Filter";
     string TableId => UniqueId + "Table";
     string OnInputScript => "deferredChange($('#" + FilterId + "')[0]);";
+    string OnClick => "selectRow('{0}','{1}')";
     string _filter;
     string _lowerFilter;
     string Filter
@@ -63,4 +64,9 @@
     }
 
     string LowerFilter => _lowerFilter;
+
+    public void Refresh()
+    {
+        this.StateHasChanged();
+    }
 }

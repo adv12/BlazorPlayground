@@ -20,6 +20,9 @@
             el.lastInputDate = new Date();
             el.lastTimeout = setTimeout(f, 500);
         }
+        function selectRow(uniqueId, filterString) {
+            DotNet.invokeMethod('SharpExplorer', 'SelectRow', uniqueId, filterString);
+        }
     </script>
 </head>
 <body>
