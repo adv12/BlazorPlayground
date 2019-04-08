@@ -50,6 +50,11 @@ app {
     flex: none;
     display: flex;
     flex-direction: column;
+    margin-right: 10px;
+}
+
+.filteredListView input {
+    width: 100%;
 }
 
 .filteredListViewFilterContainer {
@@ -59,14 +64,18 @@ app {
 
 .filteredListViewTableContainer {
     flex: auto;
-    overflow-y: scroll;
+    overflow-y: auto;
 }
 
-.filteredListViewTable tr:nth-child(even) {
+.filteredListViewTable {
+    width: 100%;
+}
+
+.filteredListViewTable tbody tr:nth-child(odd) {
     background-color: #f0f0f0;
 }
 
-.filteredListViewTable tr:hover {
+.filteredListViewTable tbody tr:hover {
     background-color: #ccccff;
 }
 

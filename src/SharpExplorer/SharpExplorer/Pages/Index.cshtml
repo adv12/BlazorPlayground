@@ -1,16 +1,59 @@
 ﻿@page "/"
 
-<FilteredListView UniqueId="allTypes" RowHeaders="@TypeRowHeaders" Rows="@TypeRows" FilterPlaceholder="Enter a type filter"/>
-<FilteredListView ref="_typeConstructorsListView" UniqueId="typeConstructors" RowHeaders="@ConstructorRowHeaders" Rows="@ConstructorRows" FilterPlaceholder="Enter a constructor filter"/>
+<div id="startColumnFilteredListView" class="filteredListView">
+    <table id="classMethodsTable" class="filteredListViewTable" style="margin-bottom: 10px;">
+        <thead>
+            <tr>
+                <th class="filteredListViewTableHeader">Class Methods</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr onclick="selectRow('startColumn','Constructors')">
+                <td>Constructors</td>
+            </tr>
+            <tr onclick="selectRow('startColumn','Static Methods')">
+                <td>Static Methods</td>
+            </tr>
+            <tr onclick="selectRow('startColumn','Static Properties')">
+                <td>Static Properties</td>
+            </tr>
+        </tbody>
+    </table>
+    <FilteredListViewContent  UniqueId="allObjects" RowHeaders="@ObjectRowHeaders" Rows="@ObjectRows" FilterPlaceholder="Enter an object filter" />
+</div>
+
+@if (SearchType != RootSearchType.None && SearchType != RootSearchType.Object && TypeRows != null)
+{
+    <FilteredListView UniqueId="types" RowHeaders="@TypeRowHeaders" Rows="@TypeRows" FilterPlaceholder="Enter a type filter" />
+}
+@if (SearchType == RootSearchType.Constructors && ConstructorRows != null)
+{
+    <FilteredListView ref="_typeConstructorsListView" UniqueId="typeConstructors" RowHeaders="@ConstructorRowHeaders" Rows="@ConstructorRows" FilterPlaceholder="Enter a constructor filter" />
+}
 
 @functions {
+
+    public enum RootSearchType
+    {
+        None,
+        Constructors,
+        StaticMethods,
+        StaticProperties,
+        Object
+    }
+
+    RootSearchType SearchType { get; set; } = RootSearchType.None;
+
     static Index _instance;
 
-    public Row[] TypeRows { get; set; }
-    public string[] TypeRowHeaders => new string[] { "Type Name", "Namespace" };
+    Row[] TypeRows { get; set; }
+    string[] TypeRowHeaders => new string[] { "Type", "Namespace" };
 
-    public Row[] ConstructorRows { get; set; } = {  };
-    public string[] ConstructorRowHeaders => new string[] { "Constructor Name" };
+    Row[] ConstructorRows { get; set; }
+    string[] ConstructorRowHeaders => new string[] { "Constructor" };
+
+    Row[] ObjectRows { get; set; }
+    string[] ObjectRowHeaders => new string[] { "Object" };
 
     FilteredListView _typeConstructorsListView;
 
@@ -19,42 +62,92 @@
     [JSInvokable("SelectRow")]
     public static void SelectRow(string uniqueId, string filterString)
     {
-        if (uniqueId == "allTypes")
+        if (uniqueId == "types")
         {
-            SelectType(filterString);
+            _instance.SelectType(filterString);
         }
         else if (uniqueId == "typeConstructors")
         {
             //
         }
-    }
-
-    public static void SelectType(string typeName)
-    {
-        Type t = ReflectionUtil.AllTypes[typeName];
-        ConstructorInfo[] constructors = t.GetConstructors();
-
-        //Row[] rows = new Row[] { new Row("foo", "bar", "baz"), new Row("one", "two", "three") };
-
-        Row[] rows = new Row[constructors.Length];
-        int i = 0;
-        foreach (ConstructorInfo constructor in constructors)
+        else if (uniqueId == "startColumn")
         {
-            ParameterInfo[] parameters = constructor.GetParameters();
-            string parameterString = string.Join(",", parameters.Select(p => p.ParameterType.ToString()).ToArray());
-            string signature = $"{constructor.Name}({parameterString})";
-            rows[i++] = new Row(constructor, signature, signature);
+            if (filterString == "Constructors")
+            {
+                _instance.SelectConstructors();
+            }
+            else if (filterString == "Static Methods")
+            {
+                _instance.SelectStaticMethods();
+            }
+            else if (filterString == "Static Properties")
+            {
+                _instance.SelectStaticProperties();
+            }
+            else
+            {
+                _instance.SelectObject(filterString);
+            }
         }
-        _instance.ConstructorRows = rows;
-        //_instance._typeConstructorsListView.Refresh();
-        _instance.StateHasChanged();
     }
 
-    protected override void OnInit()
+    public void SelectType(string typeName)
     {
-        _instance = this;
-        base.OnInit();
-        var types = ReflectionUtil.AllTypes;
+        Type t = ReflectionUtil.AllPublicTypes[typeName];
+
+        Row[] rows = { };
+
+        if (SearchType == RootSearchType.Constructors)
+        {
+            ConstructorInfo[] constructors = t.GetConstructors(BindingFlags.Public);
+
+            rows = new Row[constructors.Length];
+            int i = 0;
+            foreach (ConstructorInfo constructor in constructors)
+            {
+                ParameterInfo[] parameters = constructor.GetParameters();
+                string parameterString = string.Join(",", parameters.Select(p => p.ParameterType.ToString()).ToArray());
+                string signature = $"{constructor.Name}({parameterString})";
+                rows[i++] = new Row(constructor, signature, signature);
+            }
+            ConstructorRows = rows;
+        }
+        else if (SearchType == RootSearchType.StaticMethods)
+        {
+
+        }
+        StateHasChanged();
+    }
+
+    public void SelectConstructors()
+    {
+        
+        SearchType = RootSearchType.Constructors;
+        TypeRows = GetTypeRows(ReflectionUtil.AllPublicClassesWithPublicConstructors);
+        StateHasChanged();
+    }
+
+    public void SelectStaticMethods()
+    {
+        SearchType = RootSearchType.StaticMethods;
+        TypeRows = GetTypeRows(ReflectionUtil.AllPublicClassesWithPublicStaticMethods);
+        StateHasChanged();
+    }
+
+    public void SelectStaticProperties()
+    {
+        SearchType = RootSearchType.StaticProperties;
+        TypeRows = GetTypeRows(ReflectionUtil.AllPublicClassesWithPublicStaticProperties);
+        StateHasChanged();
+    }
+
+    public void SelectObject(string name)
+    {
+
+    }
+
+    public static Row[] GetTypeRows(SortedList<string, Type> types)
+    {
         Row[] rows = new Row[types.Count];
         int i = 0;
         foreach (string typeName in types.Keys)
@@ -62,7 +155,13 @@
             Type type = types[typeName];
             rows[i++] = new Row(type, typeName, type.Name, type.Namespace);
         }
-        TypeRows = rows;
+        return rows;
+    }
+
+    protected override void OnInit()
+    {
+        _instance = this;
+        base.OnInit();
     }
 
 }

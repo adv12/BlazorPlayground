@@ -1,34 +1,7 @@
 ﻿@page "/filteredListView"
 
     <div id="@FilteredListViewId" class="filteredListView">
-        <div class="filteredListViewFilterContainer">
-            <input id="@FilterId" type="text" oninput="@OnInputScript" placeholder="@FilterPlaceholder" bind="@Filter" />
-        </div>
-        <div class="filteredListViewTableContainer">
-            <table id="@TableId" class="filteredListViewTable">
-                @if (RowHeaders != null && RowHeaders.Length > 0)
-                {
-                    <tr class="filteredListViewTableRow">
-                        @foreach (string header in RowHeaders)
-                        {
-                            <th class="filteredListViewTableHeader">@header</th>
-                        }
-                    </tr>
-                }
-                @foreach (Row row in Rows)
-                {
-                    @if (string.IsNullOrEmpty(Filter) || row.FilterString.Contains(LowerFilter))
-                    {
-                        <tr class="filteredListViewTableRow" onclick="@string.Format(OnClick, UniqueId, row.FullName)">
-                            @foreach (string cell in row.Cells)
-                            {
-                                <td class="filteredListViewTableData">@cell</td>
-                            }
-                        </tr>
-                    }
-                }
-            </table>
-        </div>
+        <FilteredListViewContent UniqueId="@UniqueId" RowHeaders="@RowHeaders" Rows="@Rows" FilterPlaceholder="@FilterPlaceholder" />
     </div>
 
 @functions {
@@ -41,29 +14,6 @@
     [Parameter]
     string FilterPlaceholder { get; set; } = "Enter a filter";
     string FilteredListViewId => UniqueId + "FilteredListView";
-    string FilterId => UniqueId + "Filter";
-    string TableId => UniqueId + "Table";
-    string OnInputScript => "deferredChange($('#" + FilterId + "')[0]);";
-    string OnClick => "selectRow('{0}','{1}')";
-    string _filter;
-    string _lowerFilter;
-    string Filter
-    {
-        get
-        {
-            return _filter;
-        }
-        set
-        {
-            if (_filter != value)
-            {
-                _filter = value;
-                _lowerFilter = _filter?.ToLower();
-            }
-        }
-    }
-
-    string LowerFilter => _lowerFilter;
 
     public void Refresh()
     {
